@@ -5,6 +5,7 @@ requires-python = ">=3.14"
 dependencies = [
     "fastapi>=0.146.0",
     "psycopg2-binary>=2.9.13",
+    "psycopg[binary]>=3.3.6",
     "pypdf>=6.21.1",
     "python-multipart>=0.0.32",
     "sqlalchemy>=2.1.5",
