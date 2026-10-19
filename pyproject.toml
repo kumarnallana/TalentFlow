@@ -1,0 +1,12 @@
+[project]
+name = "talentflow"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.146.0",
+    "psycopg2-binary>=2.9.13",
+    "pypdf>=6.21.1",
+    "python-multipart>=0.0.32",
+    "sqlalchemy>=2.1.5",
+    "uvicorn[standard]>=0.54.0",
+]
