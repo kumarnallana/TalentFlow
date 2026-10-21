@@ -4,6 +4,8 @@ from typing import Any
 
 
 class JobAcceptedResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     filename: str
     status: str = "queued"
@@ -11,7 +13,7 @@ class JobAcceptedResponse(BaseModel):
     created_at: datetime = datetime.utcnow
 
 
-class JobDetailResponse:
+class JobDetailResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
@@ -20,4 +22,4 @@ class JobDetailResponse:
     target_skills: list[str] | None = None
     extracted_data: dict[str, Any] | None = None
     error_message: str | None = None
-    created_at: datetime = datetime.utcnow
+    created_at: datetime
