@@ -34,5 +34,8 @@ def get_db_session():
         db.close()
 
 
+get_db = get_db_session
+
+
 class Base(DeclarativeBase):
     pass

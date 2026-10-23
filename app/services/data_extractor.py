@@ -1,35 +1,35 @@
+from sqlalchemy import select
 from pathlib import Path
 from pypdf import PdfReader
 from app.core.database import SessionLocal
 from app.models.job import JobModel
+from app.schemas.jobs_schemas import Pagination
+from sqlalchemy.orm import Session
 
 
-def read_file_conetent(file_path: str) -> str:
+def read_file_content(file_path: str) -> str:
+    path = Path(file_path)
+    if not path.is_file():
+        raise FileNotFoundError(f"{file_path} is not found!!")
 
-    if not Path(file_path).is_file:
-        raise FileNotFoundError(f"{file} is not found!!")
-
-    if file_path.endswith(".pdf"):
+    lower_path = file_path.lower()
+    if lower_path.endswith(".pdf"):
         file_reader = PdfReader(file_path)
-        ext_pages = file_reader.pages
         all_text = ""
-
-        for page in ext_pages:
+        for page in file_reader.pages:
             text = page.extract_text()
-
             if text:
                 all_text += text + "\n"
+        return all_text
 
-            return all_text
-
-    elif file_path.endswith(".txt"):
+    elif lower_path.endswith(".txt"):
         with open(file_path, "r", errors="ignore") as file:
             return file.read()
 
     raise ValueError(f"{file_path} type is not supported (eg: .pdf, .txt)")
 
 
-def process_resume_job(job_id: int):
+def process_resume_job(job_id: str):
     db = SessionLocal()
 
     try:
@@ -37,30 +37,31 @@ def process_resume_job(job_id: int):
         if not job:
             return
 
-        db.status = "Processing..."
+        job.status = "processing"
         db.commit()
 
         matched_skills = []
-    # extract text from the resume
-        text = read_file_conetent(job.file_path)
+        text = read_file_content(job.file_path)
         if job.target_skills:
             for skill in job.target_skills:
-                if skill.lower() == text.lower():
+                if skill.lower() in text.lower():
                     matched_skills.append(skill)
 
         job_extracted_data = {
             "matched_skills": matched_skills,
             "match_count": len(matched_skills),
-            "text_length": len(text)
+            "text_length": len(text),
         }
 
-        job.status = "Completed..."
+        job.extracted_data = job_extracted_data
+        job.status = "completed"
         db.commit()
 
     except Exception as e:
+        db.rollback()
         job = db.query(JobModel).filter(JobModel.id == job_id).first()
         if job:
-            job.status = "failed!"
+            job.status = "failed"
             job.error_message = str(e)
             db.commit()
 
@@ -68,5 +69,16 @@ def process_resume_job(job_id: int):
         db.close()
 
 
-if __name__ == "__main__":
-    process_resume_job()
+def get_all_data(db: Session, pagination: Pagination) -> list[JobModel]:
+    statement = (
+        select(JobModel)
+        .order_by(JobModel.created_at.desc())
+        .offset(pagination.skip)
+        .limit(pagination.limit)
+    )
+    result = db.scalars(statement)
+    return list(result.all())
+
+
+def get_data_from_db(db: Session, pagination: Pagination) -> list[JobModel]:
+    return get_all_data(db, pagination)

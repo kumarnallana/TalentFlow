@@ -1,20 +1,19 @@
-from fastapi import FastAPI, BackgroundTasks
-from time import sleep
+import os
+from fastapi import FastAPI
+from app.core.database import Base, engine
+from app.routers.jobs_router import router as jobs_router
 
-app = FastAPI()
+# 1. Create database tables automatically if they don't exist
+Base.metadata.create_all(bind=engine)
 
+# 2. Ensure the uploads folder exists
+os.makedirs("uploads", exist_ok=True)
 
-def make_order(customer_name: str):
-    print(f"☕ [START] Brewing coffee for {customer_name}...")
-    sleep(5)  # Simulates a slow, heavy task
-    print(f"✅ [DONE] Coffee ready for {customer_name}!")
-
-
-@app.post("/order/{name}")
-def normal_helper(name: str):
-    make_order(name)  # Client is blocked here for 5 full seconds
-    return {"message": "done"}
+# 3. Initialize app and register the jobs router
+app = FastAPI(title="TalentFlow API")
+app.include_router(jobs_router, prefix="/api/v1")
 
 
-# if __name__ == "__main__":
-#     background_helper
+@app.get("/")
+def root():
+    return {"status": "healthy", "service": "TalentFlow Engine"}

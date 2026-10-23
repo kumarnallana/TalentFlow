@@ -3,7 +3,7 @@ from typing import Any
 from sqlalchemy import String, Text, JSON, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class JobModel(Base):
@@ -20,4 +20,4 @@ class JobModel(Base):
                            None] = mapped_column(JSON, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow)
+        DateTime, default=lambda: datetime.now(timezone.utc))
